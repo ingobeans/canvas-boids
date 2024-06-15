@@ -14,6 +14,7 @@ let boidMaxSpeed = 6;
 let boidWallAvoidSpeed = 0.2 * 3;
 let mapWidth = window.innerWidth;
 let mapHeight = window.innerHeight;
+
 let mouse = { x: 0, y: 0 };
 let mouseRadius = 25;
 
@@ -49,6 +50,7 @@ function normalizeVector(vector) {
 
 function avoidColliding(x, y) {
   // function to check if position will collide with walls or the mouse, if so, return velocity to avoid collision
+  // avoid the left and right walls
   var velocity = [0, 0];
   if (x <= 0) {
     velocity[0] = 1;
@@ -56,11 +58,14 @@ function avoidColliding(x, y) {
     velocity[0] = -1;
   }
 
+  // avoid the top and bottom walls
   if (y <= 0) {
     velocity[1] = 1;
   } else if (y > mapHeight) {
     velocity[1] = -1;
   }
+
+  // avoid the mouse
   if (
     x >= mouse.x - mouseRadius &&
     x <= mouse.x + mouseRadius &&
@@ -78,10 +83,9 @@ function avoidColliding(x, y) {
       velocity[1] = -4;
     }
   }
-  var normalized = velocity; //normalizeVector(velocity);
-  normalized[0] *= boidWallAvoidSpeed;
-  normalized[1] *= boidWallAvoidSpeed;
-  return normalized;
+  velocity[0] *= boidWallAvoidSpeed;
+  velocity[1] *= boidWallAvoidSpeed;
+  return velocity;
 }
 
 class Boid {
