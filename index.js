@@ -14,14 +14,22 @@ let boidMaxSpeed = 6;
 let boidWallAvoidSpeed = 0.2 * 3;
 let mapWidth = window.innerWidth;
 let mapHeight = window.innerHeight;
+let mouse = { x: 0, y: 0 };
+let mouseRadius = 50;
 
+function updateMouse(event) {
+  mouse.x = event.clientX;
+  mouse.y = event.clientY;
+}
+
+document.addEventListener("mousemove", updateMouse);
 window.addEventListener("resize", resizeCanvas);
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  //mapWidth = canvas.width;
-  //mapHeight = canvas.height;
+  mapWidth = canvas.width;
+  mapHeight = canvas.height;
 }
 resizeCanvas();
 
@@ -37,6 +45,43 @@ function normalizeVector(vector) {
     return vector;
   }
   return vector.map((val) => val / magnitude);
+}
+
+function avoidColliding(x, y) {
+  // function to check if position will collide with walls or the mouse, if so, return velocity to avoid collision
+  var velocity = [0, 0];
+  if (x <= 0) {
+    velocity[0] = 1;
+  } else if (x > mapWidth) {
+    velocity[0] = -1;
+  }
+
+  if (y <= 0) {
+    velocity[1] = 1;
+  } else if (y > mapHeight) {
+    velocity[1] = -1;
+  }
+  if (
+    x >= mouse.x - mouseRadius &&
+    x <= mouse.x + mouseRadius &&
+    y >= mouse.y - mouseRadius &&
+    y <= mouse.y + mouseRadius
+  ) {
+    if (x >= mouse.x) {
+      velocity[0] = 1;
+    } else {
+      velocity[0] = -1;
+    }
+    if (y >= mouse.y) {
+      velocity[1] = 1;
+    } else {
+      velocity[1] = -1;
+    }
+  }
+  var normalized = normalizeVector(velocity);
+  normalized[0] *= boidWallAvoidSpeed;
+  normalized[1] *= boidWallAvoidSpeed;
+  return normalized;
 }
 
 class Boid {
@@ -147,18 +192,12 @@ function moveBoids() {
     boid.velocity[1] += differenceY * boidCohesionFactor;
 
     // turn away from wall if boid will soon collide with it
-    if (boid.x + boid.velocity[0] * 5 <= 0) {
-      boid.velocity[0] += boidWallAvoidSpeed;
-    }
-    if (boid.x + boid.velocity[0] * 5 >= mapWidth) {
-      boid.velocity[0] -= boidWallAvoidSpeed;
-    }
-    if (boid.y + boid.velocity[1] * 5 <= 0) {
-      boid.velocity[1] += boidWallAvoidSpeed;
-    }
-    if (boid.y + boid.velocity[1] * 5 >= mapHeight) {
-      boid.velocity[1] -= boidWallAvoidSpeed;
-    }
+    var avoidCollisionVelocity = avoidColliding(
+      boid.x + boid.velocity[0] * 1,
+      boid.y + boid.velocity[1] * 1,
+    );
+    boid.velocity[0] += avoidCollisionVelocity[0];
+    boid.velocity[1] += avoidCollisionVelocity[1];
 
     // force min and max speed
     var velocityMagnitude = Math.sqrt(
@@ -168,7 +207,6 @@ function moveBoids() {
       boid.velocity[0] = (boid.velocity[0] / velocityMagnitude) * boidMinSpeed;
       boid.velocity[1] = (boid.velocity[1] / velocityMagnitude) * boidMinSpeed;
     } else if (velocityMagnitude > boidMaxSpeed) {
-      boid.velocity = normalizeVector(boid.velocity);
       boid.velocity[0] = (boid.velocity[0] / velocityMagnitude) * boidMaxSpeed;
       boid.velocity[1] = (boid.velocity[1] / velocityMagnitude) * boidMaxSpeed;
     }
