@@ -15,7 +15,7 @@ let boidWallAvoidSpeed = 0.2 * 3;
 let mapWidth = window.innerWidth;
 let mapHeight = window.innerHeight;
 let mouse = { x: 0, y: 0 };
-let mouseRadius = 50;
+let mouseRadius = 25;
 
 function updateMouse(event) {
   mouse.x = event.clientX;
@@ -68,17 +68,17 @@ function avoidColliding(x, y) {
     y <= mouse.y + mouseRadius
   ) {
     if (x >= mouse.x) {
-      velocity[0] = 1;
+      velocity[0] = 4;
     } else {
-      velocity[0] = -1;
+      velocity[0] = -4;
     }
     if (y >= mouse.y) {
-      velocity[1] = 1;
+      velocity[1] = 4;
     } else {
-      velocity[1] = -1;
+      velocity[1] = -4;
     }
   }
-  var normalized = normalizeVector(velocity);
+  var normalized = velocity; //normalizeVector(velocity);
   normalized[0] *= boidWallAvoidSpeed;
   normalized[1] *= boidWallAvoidSpeed;
   return normalized;
