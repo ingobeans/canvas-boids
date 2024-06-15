@@ -1,24 +1,29 @@
 canvas = document.getElementById("canvas");
 ctx = canvas.getContext("2d");
 
-let debug = true;
+let debug = false;
 let boids = [];
 let boidDrawSize = 4;
 let boidProtectedRange = 8 * 3;
 let boidVisualRange = 40 * 3;
-let boidSpeed = 2;
 let boidAvoidFactor = 0.05;
 let boidVelocityMatchingFactor = 0.05;
 let boidCohesionFactor = 0.0005;
-let boidMinSpeed = 9;
-let boidMaxSpeed = 18;
+let boidMinSpeed = 3;
+let boidMaxSpeed = 6;
+let boidWallAvoidSpeed = 0.2 * 3;
+let mapWidth = window.innerWidth;
+let mapHeight = window.innerHeight;
+
+window.addEventListener("resize", resizeCanvas);
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  //mapWidth = canvas.width;
+  //mapHeight = canvas.height;
 }
 resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
 
 function getRandomInt(min, max) {
   min = Math.ceil(min);
@@ -36,8 +41,8 @@ function normalizeVector(vector) {
 
 class Boid {
   constructor() {
-    this.x = getRandomInt(0, canvas.width);
-    this.y = getRandomInt(0, canvas.height);
+    this.x = getRandomInt(0, mapWidth);
+    this.y = getRandomInt(0, mapHeight);
     this.velocity = [Math.random() * 18 - 9, Math.random() * 18 - 9];
   }
 }
@@ -83,19 +88,6 @@ function createBoids(amount) {
 
 function moveBoids() {
   for (const boid of boids) {
-    var boidsWithinVisualRange = getBoidsInRange(
-      boid.x,
-      boid.y,
-      boidVisualRange,
-    );
-    if (boidsWithinVisualRange.length <= 1) {
-      boid.x += boid.velocity[0];
-      boid.y += boid.velocity[1];
-      continue;
-      // no rules will apply if no other boids are within even visual range
-      // skip this boid
-    }
-
     // rule 1 - seperation
     var boidsWithinProtectedRange = getBoidsInRange(
       boid.x,
@@ -118,6 +110,11 @@ function moveBoids() {
     }
 
     // rule 2 - alignment
+    var boidsWithinVisualRange = getBoidsInRange(
+      boid.x,
+      boid.y,
+      boidVisualRange,
+    );
     var avgVelocity = [0, 0];
     for (const boidWithinVisualRange of boidsWithinVisualRange) {
       avgVelocity[0] += boidWithinVisualRange.velocity[0];
@@ -148,6 +145,21 @@ function moveBoids() {
 
     boid.velocity[0] += differenceX * boidCohesionFactor;
     boid.velocity[1] += differenceY * boidCohesionFactor;
+
+    // turn away from wall if boid will soon collide with it
+    if (boid.x + boid.velocity[0] * 5 <= 0) {
+      boid.velocity[0] += boidWallAvoidSpeed;
+    }
+    if (boid.x + boid.velocity[0] * 5 >= mapWidth) {
+      boid.velocity[0] -= boidWallAvoidSpeed;
+    }
+    if (boid.y + boid.velocity[1] * 5 <= 0) {
+      boid.velocity[1] += boidWallAvoidSpeed;
+    }
+    if (boid.y + boid.velocity[1] * 5 >= mapHeight) {
+      boid.velocity[1] -= boidWallAvoidSpeed;
+    }
+
     // force min and max speed
     var velocityMagnitude = Math.sqrt(
       Math.pow(boid.velocity[0], 2) + Math.pow(boid.velocity[1], 2),
@@ -197,6 +209,8 @@ function update() {
   requestAnimationFrame(update);
 }
 
-createBoids(30);
+createBoids((mapWidth * mapHeight) / 29408);
+// create a suitable amount of boids for the screen size
+// this will create roughly 70 boids on a 1920x1080 viewport
 
 update();
