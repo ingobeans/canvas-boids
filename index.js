@@ -17,12 +17,25 @@ let mapHeight = window.innerHeight;
 
 let mouse = { x: 0, y: 0 };
 let mouseRadius = 25;
+let mousePressed = false;
 
 function updateMouse(event) {
   mouse.x = event.clientX;
   mouse.y = event.clientY;
 }
 
+function mouseDown(event) {
+  mousePressed = true;
+  mouseRadius = 80;
+}
+
+function mouseUp(event) {
+  mousePressed = false;
+  mouseRadius = 25;
+}
+
+document.addEventListener("mousedown", mouseDown);
+document.addEventListener("mouseup", mouseUp);
 document.addEventListener("mousemove", updateMouse);
 window.addEventListener("resize", resizeCanvas);
 
@@ -66,6 +79,13 @@ function avoidColliding(x, y) {
   }
 
   // avoid the mouse
+
+  let mod = 1;
+  if (mousePressed) {
+    mod = -0.3;
+  }
+  // modifier to make boids go toward mouse if mouse is held
+
   if (
     x >= mouse.x - mouseRadius &&
     x <= mouse.x + mouseRadius &&
@@ -73,14 +93,14 @@ function avoidColliding(x, y) {
     y <= mouse.y + mouseRadius
   ) {
     if (x >= mouse.x) {
-      velocity[0] = 4;
+      velocity[0] = 4 * mod;
     } else {
-      velocity[0] = -4;
+      velocity[0] = -4 * mod;
     }
     if (y >= mouse.y) {
-      velocity[1] = 4;
+      velocity[1] = 4 * mod;
     } else {
-      velocity[1] = -4;
+      velocity[1] = -4 * mod;
     }
   }
   velocity[0] *= boidWallAvoidSpeed;
@@ -248,6 +268,7 @@ function update() {
   drawRect(0, 0, canvas.width, canvas.height, "#ffffff");
   moveBoids();
   drawBoids();
+  drawCircle(mouse.x, mouse.y, mouseRadius, null, "#00ff00");
   requestAnimationFrame(update);
 }
 
