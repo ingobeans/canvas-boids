@@ -9,6 +9,16 @@ function update() {
   requestAnimationFrame(update);
 }
 
+window.addEventListener("resize", resizeCanvas);
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  mapWidth = canvas.width;
+  mapHeight = canvas.height;
+}
+resizeCanvas();
+
 createBoids((mapWidth * mapHeight) / 29408);
 // create a suitable amount of boids for the screen size
 // this will create roughly 70 boids on a 1920x1080 viewport
